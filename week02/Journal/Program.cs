@@ -67,41 +67,48 @@ public class PromptGenerator
         }
     }
 
-    public void SaveToFile(string filename)
+   public void SaveToFile(string filename)
+{
+    using (StreamWriter writer = new StreamWriter(filename))
     {
-        using (StreamWriter writer = new StreamWriter(filename))
+        writer.WriteLine("Date,Prompt,Response"); // CSV header
+        foreach (var entry in entries)
         {
-            foreach (var entry in entries)
-            {
-                writer.WriteLine($"{entry.Date}|{entry.Prompt}|{entry.Response}");
-            }
+            string prompt = entry.Prompt.Replace(",", ";").Replace("\"", "\"\"");
+            string response = entry.Response.Replace(",", ";").Replace("\"", "\"\"");
+            writer.WriteLine($"\"{entry.Date}\",\"{prompt}\",\"{response}\"");
         }
-        Console.WriteLine("Journal saved successfully.");
     }
+    Console.WriteLine("Journal saved successfully.");
+}
 
     public void LoadFromFile(string filename)
+{
+    if (!File.Exists(filename))
     {
-        if (!File.Exists(filename))
-        {
-            Console.WriteLine("File not found.");
-            return;
-        }
+        Console.WriteLine("File not found.");
+        return;
+    }
 
-        entries.Clear();
-        using (StreamReader reader = new StreamReader(filename))
+    entries.Clear();
+    using (StreamReader reader = new StreamReader(filename))
+    {
+        reader.ReadLine(); // Skip header
+        string line;
+        while ((line = reader.ReadLine()) != null)
         {
-            string line;
-            while ((line = reader.ReadLine()) != null)
+            string[] parts = line.Split(',');
+            if (parts.Length == 3)
             {
-                string[] parts = line.Split('|');
-                if (parts.Length == 3)
-                {
-                    entries.Add(new Entry(parts[1], parts[2], parts[0]));
-                }
+                string date = parts[0].Trim('"');
+                string prompt = parts[1].Trim('"');
+                string response = parts[2].Trim('"');
+                entries.Add(new Entry(prompt, response, date));
             }
         }
-        Console.WriteLine("Journal loaded successfully.");
     }
+    Console.WriteLine("Journal loaded successfully.");
+}
 }
 
 // Program/menu
